@@ -1,5 +1,5 @@
 {
-  "name": "DM-Liri-node-app",
+  "name": "dm-liri-node-app",
   "version": "1.0.0",
   "description": "LIRI app homework",
   "main": "liri.js",
