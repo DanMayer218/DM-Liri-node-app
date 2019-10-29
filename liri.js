@@ -1,113 +1,149 @@
-// var dotenv = require("dotenv").config();
+// REQUIRE .env FILE
+require("dotenv").config();
 
-var axios = require("axios");
-var omdb = require("omdb");
-var fs = require("fs");
-var moment = require("moment");
-var spotify = require("node-spotify-api")
+// REQUIRE AXIOS
+const axios = require("axios");
 
+// REQUIRE REQUEST
+let request = require("request");
 
-var queryURL = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=[91f94af4]";
+// REQUIRE MOMENT
+const moment = require('moment');
 
-    axios.get(queryURL).then(
-        function(movieResponse){
-            console.log("Title: " + movieResponse.data.Title);
-            console.log("Year: " + movieResponse.data.Year);
-            console.log("Rated: " + movieResponse.data.imdbRating);
-            console.log("Country: " + movieResponse.data.Country);
-            console.log("Language: " + movieResponse.data.Language);
-            console.log("Plot: " + movieResponse.data.Plot);
-            console.log("Actors: " + movieResponse.data.Actors);
-            console.log("Rotten Tomatoes: " + movieResponse.data.Ratings[1].Value);
-        }
-    );
+//REQUIRE FILE SYSTEMS
+const fs = require("fs");
 
-                var spotify = new Spotify({
-                  id: spotifyKeyInfo["spotify"].id,
-                  secret: spotifyKeyInfo["spotify"].secret
-              });
-
-              spotify.request('https://api.spotify.com/v1/search?q=track:' + songName + '&type=track&limit=10', function(error, songResponse) {
-                  if (error){
-                      return console.log(error);
-                  }
-                  console.log("Artist: " + songResponse.tracks.items[0].artists[0].name);
-                  console.log("Song: " + songResponse.tracks.items[0].name);
-                  console.log("URL: " + songResponse.tracks.items[0].preview_url);
-                  console.log("Album: " + songResponse.tracks.items[0].album.name);
-              });
-
-                            var queryURL = "https://rest.bandsintown.com/artists/" + bandName + "/events?app_id=[key]";
-                              
-                            console.log(queryURL); 
-
-                            axios.get(queryURL).then(
-                                function(bandResponse){
-                                    console.log("Venue: " + bandResponse.data[0].venue.name);
-                                    console.log("City: " + bandResponse.data[0].venue.city);
-                                    console.log(moment(bandResponse.data[0].datetime).format("MM/DD/YYYY"));
-                                }
-                            );
-                          
+// LINK KEY PAGE
+const keys = require("./keys.js");
 
 
 
-var userInput = process.argv;
-var inputTopic = process.argv[2];
 
 
-switch (inputTopic){
-    case "concert-this":
-        bandInfo();
-        break;
-    
-    case "spotify-this-song":
-        songInfo();
-        break;
-    
-    case "movie-this":
-        movieInfo();
-        break;
+// INITIALIZEs SPOTIFY
+const Spotify = require("node-spotify-api");
+const spotify = new Spotify(keys.spotify);
 
-    case "do-what-it-says":
-        doWhatInfo();
-        break;
+// OMdb
+let omdb = (keys.omdb);
+let bandsintown = (keys.bandsintown);
+
+
+// ACCEPTS USER COMMANDS
+let userInput = process.argv[2];
+let userQuery = process.argv.slice(3).join(" ");
+
+
+
+
+
+// SWITCH FUNCTION FOR USERS COMMANDS
+function userCommand(userInput, userQuery) {
+    // THE DIFFERENT SWITCH CASES
+    switch (userInput) {
+        case "concert-this":
+            concertThis();
+            break;
+        case "spotify-this":
+            spotifyThisSong();
+            break;
+        case "movie-this":
+            movieThis();
+            break;
+        case "do-this":
+            doThis(userQuery);
+            break;
+        default:
+            console.log("Sorry, I didn't get that.  Try again?");
+            break;
+    }
 }
 
-function bandInfo(){
-  var bandName = "";
-  for (var i = 3; i < userInput.length; i++){
-      if (i > 3 && i < userInput.length){
-          bandName = bandName + "+" + userInput[i];
-      }
-      else{
-          bandName += userInput[i];
-      }
-  }
+userCommand(userInput, userQuery);
+
+function concertThis() {
+    console.log(`\n - - - - -\n\nSEARCHING FOR...${userQuery}'s next show...`);
+    // USER QUERY FOR THE BANDS IN TOWN API
+    request("https://rest.bandsintown.com/artists/" + userQuery + "/events?app_id=" + bandsintown, function (error, response, body) {
+        if (!error && response.statusCode === 200) {
+            // FORMAT THE JSON RESPONSE
+            let userBand = JSON.parse(body);
+            // PARSING THE RESPONSE DATA
+            if (userBand.length > 0) {
+                for (i = 0; i < 1; i++) {
+                    // CONSOLE LOGGING THE RESPONSE
+                    console.log(`\nBA DA BOP!  That's for you...\n\nArtist: ${userBand[i].lineup[0]} \nVenue: ${userBand[i].venue.name}\nVenue Location: ${userBand[i].venue.latitude},${userBand[i].venue.longitude}\nVenue City: ${userBand[i].venue.city}, ${userBand[i].venue.country}`)
+
+                    // FORMATTING THE DATE AND TIME
+                    let concertDate = moment(userBand[i].datetime).format("MM/DD/YYYY hh:00 A");
+                    console.log(`Date and Time: ${concertDate}\n\n- - - - -`);
+                };
+            } else {
+                console.log('Band or concert not found!');
+            };
+        };
+    });
+};
+
+function spotifyThisSong() {
+    console.log(`\n - - - - -\n\nSEARCHING FOR..."${userQuery}"`);
+
+    // DEFAULT SONG IF USER QUERY NOT FOUND
+    if (!userQuery) {
+        userQuery = "maneater hall and oates"
+    };
+
+    //SPOTIFY SEARCH FORMAT
+    spotify.search({
+        type: 'track',
+        query: userQuery,
+        limit: 1
+    }, function (error, data) {
+        if (error) {
+            return console.log('Error occurred: ' + error);
+        }
+        // STORING THE RESPONSE DATA IN AN ARRAY
+        let spotifyArr = data.tracks.items;
+
+        for (i = 0; i < spotifyArr.length; i++) {
+            console.log(`\nBA DA BOP!  That's for you...\n\nArtist: ${data.tracks.items[i].album.artists[0].name} \nSong: ${data.tracks.items[i].name}\nAlbum: ${data.tracks.items[i].album.name}\nSpotify link: ${data.tracks.items[i].external_urls.spotify}\n\n - - - - -`)
+        };
+    });
 }
 
+function movieThis() {
+    console.log(`\n - - - - -\n\nSEARCHING FOR..."${userQuery}"`);
+    if (!userQuery) {
+        userQuery = "mr nobody";
+    };
+    // OMDB REQUEST
+    request("http://www.omdbapi.com/?t=" + userQuery + "&apikey=86fe999c", function (error, response, body) {
+        let userMovie = JSON.parse(body);
+            // GETTING THE RATINGS DATA
+        let ratingsArr = userMovie.Ratings;
+        if (ratingsArr.length > 2) {}
 
-  function songInfo(){
-    var songName = "";
-    for (var i = 3; i < userInput.length; i++){
-        if (i > 3 && i < userInput.length){
-            songName = songName + "+" + userInput[i];
-        }
-        else{
-            songName += userInput[i];
-        }
-    }
-  }
-  
+        if (!error && response.statusCode === 200) {
+            console.log(`\nBA DA BOP!  That's for you...\n\nTitle: ${userMovie.Title}\nCast: ${userMovie.Actors}\nReleased: ${userMovie.Year}\nIMDb Rating: ${userMovie.imdbRating}\nRotten Tomatoes Rating: ${userMovie.Ratings[1].Value}\nCountry: ${userMovie.Country}\nLanguage: ${userMovie.Language}\nPlot: ${userMovie.Plot}\n\n- - - - -`)
+        } else {
+            return console.log("Movie able to be found. Error:" + error)
+        };
+    })
+};
 
-    function movieInfo(){
-      var movieName = "";
-      for (var i = 3; i < userInput.length; i++){
-          if (i > 3 && i < userInput.length){
-              movieName = movieName + "+" + userInput[i];
-          }
-          else{
-              movieName += userInput[i];
-          }
-      }
-    }
+function doThis() {
+        // READFILE METHOD OF FS
+    fs.readFile("random.txt", "utf8", function (error, data) {
+        if (error) {
+            return console.log(error);
+        }
+        // SEPARATING THE OBJECTS IN ARRAY
+        let dataArr = data.split(",");
+
+        // RETRIEVING OBJECTS FROM THE RANDOM TEXT FILE
+        userInput = dataArr[0];
+        userQuery = dataArr[1];
+        // CALL THE FUNCTION 
+        userCommand(userInput, userQuery);
+    });
+};

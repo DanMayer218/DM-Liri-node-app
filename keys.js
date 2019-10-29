@@ -1,21 +1,18 @@
-console.log("this is loaded");
+// console.log('this is loaded');
 
-var omdbkey = " http://www.omdbapi.com/?i=tt3896198&apikey=91f94af4&";
-exports.module.keys.js;
+exports.spotify = {
+    id: process.env.SPOTIFY_ID,
+    secret: process.env.SPOTIFY_SECRET
+};
 
-console.log(omdb);
+exports.bandsintown = {
+    id: process.env.BANDSINTOWN_ID
+}
 
+exports.omdb = {
+    id: process.env.OMDB_ID
+}
 
-
-
-
-// const omdb = require("omdb")
-// exports.omdb = {
-//    apikey: process.env.apikey
-// };
-// exports.spotify = {
-//     id: process.env.SPOTIFY_ID,
-//     secret: process.env.SPOTIFY_SECRET
-// };
-
-
+exports.mapquest = {
+    id: process.env.MAPQUEST_ID
+}
